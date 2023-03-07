@@ -2,6 +2,7 @@ const download = require('download');
 const jsonfile = require('jsonfile');
 const path = require('path');
 const fs = require('fs');
+const ora = require('ora')
 const command = require('./command');
 const packagesPath = path.resolve(__dirname, 'packages');
 const packagesTypesPath = path.resolve(__dirname, 'packages\\types');
@@ -20,6 +21,8 @@ let filePath = path.resolve(__dirname, 'package-lock.json');
 console.log(filePath)
 jsonfile.readFile(filePath, async function (err, jsonData) {
   if (!err) {
+    const spinner = ora('download packages')
+    spinner.start() //显示加载状态  
     // 存储npm包
     const resolvedUrl = [];
     // 重复多少个
@@ -55,31 +58,56 @@ jsonfile.readFile(filePath, async function (err, jsonData) {
       })
     }
     loopDependencies(jsonData)
-    console.log(`总共${resolvedUrl.length}+${typesUrl.length}个依赖，${havedUrls.length}个重复`);
+    console.log(`\n总共${resolvedUrl.length}+${typesUrl.length}个依赖，${havedUrls.length}个重复`);
     if (!fs.existsSync(packagesPath)) {
       fs.mkdirSync(packagesPath);
     }
     if (!fs.existsSync(packagesTypesPath)) {
       fs.mkdirSync(packagesTypesPath);
     }
-    // fs.writeFileSync('a.json', JSON.stringify(resolvedUrl));
+    const downfiles = fs.readdirSync(packagesPath) || []
+    const downtypefiles = fs.readdirSync(packagesTypesPath) || []
     const finishTotal = [];
+    let isFinish1 = false
+    let isFinish2 = false
+    if (resolvedUrl.length === 0) {
+      isFinish1 = true
+    }
     resolvedUrl.forEach(async (obj, idx) => {
-      await download(obj.resolved, packagesPath);
+      const filepath = obj.resolved
+      const findIdx = downfiles.findIndex((val) => filepath.split('/').pop() === val)
+      // console.log(findIdx)
+      if (findIdx === -1) {
+        await download(obj.resolved, packagesPath);
+      }
       finishTotal.push(idx);
-      console.log(finishTotal.length, 'finishTotal');
+      // console.log(finishTotal.length, 'finishTotal');
       if (finishTotal.length === resolvedUrl.length) {
-        console.log('完成所有下载');
+        // console.log('完成所有下载');
+        isFinish1 = true
       }
     })
     const finishTypesTotal = [];
+    if (typesUrl.length === 0) {
+      isFinish2 = true
+    }
     typesUrl.forEach(async (obj, idx) => {
-      await download(obj.resolved, packagesTypesPath);
+      const filepath = obj.resolved
+      const findIdx = downtypefiles.findIndex((val) => filepath.split('/').pop() === val)
+      // console.log(findIdx)
+      if (findIdx === -1) {
+        await download(obj.resolved, packagesTypesPath);
+      }
       finishTypesTotal.push(idx);
-      console.log(finishTypesTotal.length, 'finishTypesTotal');
+      // console.log(finishTypesTotal.length, 'finishTypesTotal');
       if (finishTypesTotal.length === typesUrl.length) {
-        console.log('完成所有Types包下载');
+        // console.log('完成所有Types包下载');
+        isFinish2 = true
       }
     });
+    if (isFinish1 && isFinish2) {
+      console.log('完成所有下载');
+      spinner.stop() //隐藏加载状态
+    }
   }
 });
