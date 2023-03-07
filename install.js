@@ -25,8 +25,6 @@ jsonfile.readFile(filePath, async function (err, jsonData) {
     spinner.start() //显示加载状态  
     // 存储npm包
     const resolvedUrl = [];
-    // 重复多少个
-    const havedUrls = [];
     // 存储types包
     const typesUrl = [];
     const loopDependencies = (dependenciesData) => {
@@ -50,15 +48,13 @@ jsonfile.readFile(filePath, async function (err, jsonData) {
                 resolved,
               })
             }
-          } else {
-            havedUrls.push(resolved)
           }
           loopDependencies(dependencie)
         }
       })
     }
     loopDependencies(jsonData)
-    console.log(`\n总共${resolvedUrl.length}+${typesUrl.length}个依赖，${havedUrls.length}个重复`);
+    console.log(`\n总共${resolvedUrl.length}+${typesUrl.length}个依赖`);
     if (!fs.existsSync(packagesPath)) {
       fs.mkdirSync(packagesPath);
     }
