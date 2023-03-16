@@ -18,7 +18,7 @@ let filePath = path.resolve(__dirname, 'package-lock.json');
     filePath = argv[pathIdx + 1]
   }
 })();
-console.log(filePath)
+
 jsonfile.readFile(filePath, async function (err, jsonData) {
   if (!err) {
     const spinner = ora('download packages')
